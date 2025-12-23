@@ -133,6 +133,19 @@ p {
   gap: 1px;
 }
 
+.roll-label-cell {
+  position: sticky;
+  left: 0;
+  background: rgba(10, 15, 22, 0.9);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+  font-size: 11px;
+  color: var(--muted);
+  z-index: 2;
+}
+
 .roll-cell {
   background: rgba(255, 255, 255, 0.03);
   cursor: pointer;
@@ -147,15 +160,6 @@ p {
   background: linear-gradient(120deg, #7fd7ff 0%, #7e9bff 100%);
 }
 
-.roll-label {
-  position: absolute;
-  left: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 11px;
-  color: var(--muted);
-  pointer-events: none;
-}
 
 .file {
   position: relative;

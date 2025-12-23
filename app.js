@@ -389,7 +389,10 @@ function buildRoll() {
 
   rollNotes = Array(steps).fill(null);
   els.rollHeader.innerHTML = "";
-  els.rollHeader.style.gridTemplateColumns = `repeat(${steps}, minmax(24px, 1fr))`;
+  els.rollHeader.style.gridTemplateColumns = `80px repeat(${steps}, minmax(24px, 1fr))`;
+  const labelHead = document.createElement("div");
+  labelHead.textContent = "Pitch";
+  els.rollHeader.appendChild(labelHead);
   for (let s = 0; s < steps; s += 1) {
     const div = document.createElement("div");
     if (s % stepsPerBar === 0) div.style.color = "#ffb457";
@@ -401,19 +404,17 @@ function buildRoll() {
   rows.forEach((midi, rowIdx) => {
     const row = document.createElement("div");
     row.className = "roll-row";
-    row.style.gridTemplateColumns = `repeat(${steps}, minmax(24px, 1fr))`;
+    row.style.gridTemplateColumns = `80px repeat(${steps}, minmax(24px, 1fr))`;
+    const label = document.createElement("div");
+    label.className = "roll-label-cell";
+    label.textContent = pitchLabel(midi);
+    row.appendChild(label);
     for (let step = 0; step < steps; step += 1) {
       const cell = document.createElement("div");
       cell.className = "roll-cell";
       if (step % stepsPerBar === 0) cell.classList.add("bar");
       cell.dataset.step = String(step);
       cell.dataset.midi = String(midi);
-      if (rowIdx === 0) {
-        const label = document.createElement("div");
-        label.className = "roll-label";
-        label.textContent = pitchLabel(midi);
-        cell.appendChild(label);
-      }
       cell.addEventListener("click", () => {
         const current = rollNotes[step];
         const newVal = current === midi ? null : midi;
