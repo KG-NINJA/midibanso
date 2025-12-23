@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MIDIBANSO</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="grain"></div>
+    <div class="wrap">
+      <header class="hero">
+        <div class="badge">MIDIBANSO</div>
+        <h1>Mono Melody → Instant Accompaniment</h1>
+        <p>
+          Drop a monophonic MIDI line and get a clean chordal backing track in seconds.
+          Runs 100% in your browser, no server needed.
+        </p>
+      </header>
+
+      <section class="panel">
+        <div class="panel-title">Input</div>
+        <div class="panel-body">
+          <div class="input-row">
+            <label class="file">
+              <input id="midiFile" type="file" accept=".mid,.midi" />
+              <span class="file-label">Choose MIDI file</span>
+            </label>
+            <button id="generate" class="ghost" disabled>Generate from file</button>
+          </div>
+          <div class="status" id="status">Waiting for a MIDI file or composition...</div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title">Compose (Piano Roll)</div>
+        <div class="panel-body">
+          <div class="input-row">
+            <label>
+              Bars
+              <input id="bars" type="number" min="1" max="8" value="2" />
+            </label>
+            <label>
+              Grid
+              <select id="grid">
+                <option value="8" selected>1/8</option>
+                <option value="16">1/16</option>
+              </select>
+            </label>
+            <button id="clearRoll" class="ghost">Clear roll</button>
+            <button id="composeGenerate" class="primary">Generate from roll</button>
+            <button id="downloadMelody" class="ghost" disabled>Download melody</button>
+          </div>
+          <div class="roll-wrap">
+            <div class="roll-header" id="rollHeader"></div>
+            <div class="roll" id="roll"></div>
+          </div>
+          <div class="hint">Click a cell to place a note. Only one note per step (monophonic).</div>
+          <div class="hint">Range: C3 to C6. Bars and grid update the roll size.</div>
+        </div>
+      </section>
+
+      <section class="grid">
+        <div class="panel">
+          <div class="panel-title">Settings</div>
+          <div class="panel-body settings">
+            <label>
+              Target octave
+              <input id="octave" type="number" min="2" max="5" value="3" />
+            </label>
+            <label>
+              Chord velocity
+              <input id="velocity" type="number" min="20" max="120" value="60" />
+            </label>
+            <label>
+              Harmony speed (beats)
+              <input id="hold" type="number" min="0.25" max="4" step="0.25" value="1" />
+            </label>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Output</div>
+          <div class="panel-body">
+            <div class="output-row">
+              <button id="download" class="ghost" disabled>Download MIDI</button>
+              <div class="small" id="summary">No output yet.</div>
+            </div>
+            <div class="legend">
+              <div><span class="dot melody"></span> Melody track stays intact</div>
+              <div><span class="dot acc"></span> Accompaniment track is appended</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title">How it works</div>
+        <div class="panel-body steps">
+          <div>
+            <div class="step-num">01</div>
+            <div>
+              <div class="step-title">Analyze</div>
+              <div class="step-text">Estimate the key from note pitch classes.</div>
+            </div>
+          </div>
+          <div>
+            <div class="step-num">02</div>
+            <div>
+              <div class="step-title">Choose chords</div>
+              <div class="step-text">Match melody notes to I/IV/V/vi triads.</div>
+            </div>
+          </div>
+          <div>
+            <div class="step-num">03</div>
+            <div>
+              <div class="step-title">Write track</div>
+              <div class="step-text">Render block chords below the melody.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer>
+        <div class="small">Runs locally in your browser. No uploads.</div>
+      </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tonejs/midi@2.0.28/build/Midi.min.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
