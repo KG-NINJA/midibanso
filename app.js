@@ -4,13 +4,21 @@ const els = {
   generate: document.getElementById("generate"),
   download: document.getElementById("download"),
   downloadMelody: document.getElementById("downloadMelody"),
+  previewMelody: document.getElementById("previewMelody"),
+  previewAcc: document.getElementById("previewAcc"),
+  previewAll: document.getElementById("previewAll"),
   status: document.getElementById("status"),
   summary: document.getElementById("summary"),
   octave: document.getElementById("octave"),
   velocity: document.getElementById("velocity"),
   hold: document.getElementById("hold"),
+  style: document.getElementById("style"),
+  wave: document.getElementById("wave"),
+  bassRhythm: document.getElementById("bassRhythm"),
+  arpDir: document.getElementById("arpDir"),
   bars: document.getElementById("bars"),
   grid: document.getElementById("grid"),
+  tempo: document.getElementById("tempo"),
   roll: document.getElementById("roll"),
   rollHeader: document.getElementById("rollHeader"),
   clearRoll: document.getElementById("clearRoll"),
@@ -30,6 +38,10 @@ let inputBuffer = null;
 let lastBlob = null;
 let melodyBlob = null;
 let rollNotes = [];
+let lastMidi = null;
+let lastMelodyNotes = [];
+let lastAccNotes = [];
+let audioCtx = null;
 
 function setStatus(text) {
   els.status.textContent = text;
@@ -104,11 +116,15 @@ function addAccompaniment(midi, notes) {
   const base = targetOctave * 12;
   const velocity = Math.min(120, Math.max(20, parseInt(els.velocity.value, 10) || 60));
   const holdBeats = Math.max(0.25, Math.min(4, parseFloat(els.hold.value) || 1));
+  const style = els.style?.value || "block";
+  const bassRhythm = els.bassRhythm?.value || "quarter";
+  const arpDir = els.arpDir?.value || "up";
 
   let prevChord = null;
   let holdTicks = 0;
   const ticksPerBeat = midi.header.ppq || 480;
   const minHoldTicks = Math.round(holdBeats * ticksPerBeat);
+  const accNotes = [];
 
   notes.forEach((note) => {
     const melodyPc = note.midi % 12;
@@ -118,19 +134,68 @@ function addAccompaniment(midi, notes) {
     }
     holdTicks += note.durationTicks;
 
-    prevChord.pcs.forEach((pc) => {
-      let chordNote = base + pc;
-      if (chordNote >= note.midi - 6) chordNote -= 12;
-      if (chordNote < 36) chordNote += 12;
-      acc.addNote({
-        midi: chordNote,
-        ticks: note.ticks,
-        durationTicks: note.durationTicks,
-        velocity: velocity / 127,
+    if (style === "bass") {
+      const rootPc = prevChord.pcs[0];
+      const rhythmOffsets =
+        bassRhythm === "eighth"
+          ? [0, 0.5]
+          : bassRhythm === "sync"
+            ? [0, 0.75]
+            : [0];
+      const beatTicks = ticksPerBeat;
+      const maxTicks = note.durationTicks;
+      rhythmOffsets.forEach((offset) => {
+        const tickOffset = Math.round(offset * beatTicks);
+        if (tickOffset >= maxTicks) return;
+        let chordNote = base + rootPc - 12;
+        if (chordNote >= note.midi - 6) chordNote -= 12;
+        if (chordNote < 24) chordNote += 12;
+        accNotes.push({
+          midi: chordNote,
+          ticks: note.ticks + tickOffset,
+          durationTicks: Math.min(maxTicks - tickOffset, beatTicks),
+          velocity: velocity / 127,
+        });
       });
-    });
+    } else if (style === "arp") {
+      const baseSeq = prevChord.pcs.slice();
+      const seq =
+        arpDir === "down"
+          ? baseSeq.slice().reverse()
+          : arpDir === "updown"
+            ? baseSeq.concat(baseSeq.slice(1, -1).reverse())
+            : baseSeq;
+      const arpCount = Math.max(1, seq.length);
+      const dur = Math.max(1, Math.floor(note.durationTicks / arpCount));
+      for (let i = 0; i < arpCount; i += 1) {
+        const pc = seq[i % seq.length];
+        let chordNote = base + pc;
+        if (chordNote >= note.midi - 6) chordNote -= 12;
+        if (chordNote < 36) chordNote += 12;
+        accNotes.push({
+          midi: chordNote,
+          ticks: note.ticks + i * dur,
+          durationTicks: dur,
+          velocity: velocity / 127,
+        });
+      }
+    } else {
+      prevChord.pcs.forEach((pc) => {
+        let chordNote = base + pc;
+        if (chordNote >= note.midi - 6) chordNote -= 12;
+        if (chordNote < 36) chordNote += 12;
+        accNotes.push({
+          midi: chordNote,
+          ticks: note.ticks,
+          durationTicks: note.durationTicks,
+          velocity: velocity / 127,
+        });
+      });
+    }
   });
 
+  accNotes.forEach((n) => acc.addNote(n));
+  lastAccNotes = accNotes.slice();
   return key;
 }
 
@@ -144,6 +209,12 @@ function buildMelodyFromRoll() {
   track.name = "Melody";
   const ticksPerBeat = midi.header.ppq || 480;
   const stepTicks = Math.round(ticksPerBeat * (4 / subdivision));
+  const bpm = Math.min(220, Math.max(40, parseInt(els.tempo.value, 10) || 120));
+  if (midi.header.setTempo) {
+    midi.header.setTempo(bpm);
+  } else {
+    midi.header.tempos = [{ ticks: 0, bpm }];
+  }
 
   for (let step = 0; step < steps; step += 1) {
     const midiNote = rollNotes[step];
@@ -174,6 +245,8 @@ function buildOutput() {
     setStatus("No notes found in MIDI.");
     return;
   }
+  lastMidi = midi;
+  lastMelodyNotes = notes.slice();
   const key = addAccompaniment(midi, notes);
   const output = midi.toArray();
   lastBlob = new Blob([output], { type: "audio/midi" });
@@ -191,6 +264,8 @@ function buildOutputFromRoll() {
   }
   const melodyArray = midi.toArray();
   melodyBlob = new Blob([melodyArray], { type: "audio/midi" });
+  lastMidi = midi;
+  lastMelodyNotes = notes.slice();
   const key = addAccompaniment(midi, notes);
   const output = midi.toArray();
   lastBlob = new Blob([output], { type: "audio/midi" });
@@ -222,6 +297,76 @@ function downloadMelody() {
   a.click();
   a.remove();
   URL.revokeObjectURL(url);
+}
+
+function ensureAudio() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (audioCtx.state === "suspended") {
+    audioCtx.resume().catch(() => {});
+  }
+}
+
+function midiToFreq(midi) {
+  return 440 * Math.pow(2, (midi - 69) / 12);
+}
+
+function ticksToSeconds(ticks, bpm, ppq) {
+  const beats = ticks / ppq;
+  return (60 / bpm) * beats;
+}
+
+function getBpm() {
+  if (lastMidi?.header?.tempos?.length) {
+    return lastMidi.header.tempos[0].bpm || 120;
+  }
+  return Math.min(220, Math.max(40, parseInt(els.tempo.value, 10) || 120));
+}
+
+function playNotes(notes, bpm, gain = 0.12) {
+  if (!notes || notes.length === 0) return;
+  ensureAudio();
+  const ctx = audioCtx;
+  const ppq = lastMidi?.header?.ppq || 480;
+  const startAt = ctx.currentTime + 0.05;
+  const wave = els.wave?.value || "sine";
+  notes.forEach((n) => {
+    const t = startAt + ticksToSeconds(n.ticks, bpm, ppq);
+    const dur = Math.max(0.05, ticksToSeconds(n.durationTicks, bpm, ppq));
+    const osc = ctx.createOscillator();
+    const g = ctx.createGain();
+    osc.type = wave;
+    osc.frequency.setValueAtTime(midiToFreq(n.midi), t);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(gain, t + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    osc.connect(g);
+    g.connect(ctx.destination);
+    osc.start(t);
+    osc.stop(t + dur + 0.05);
+  });
+}
+
+function previewMelody() {
+  if (!lastMelodyNotes.length) {
+    const { notes } = buildMelodyFromRoll();
+    lastMelodyNotes = notes.slice();
+  }
+  playNotes(lastMelodyNotes, getBpm(), 0.14);
+}
+
+function previewAcc() {
+  if (!lastAccNotes.length) {
+    if (inputBuffer) buildOutput();
+    else buildOutputFromRoll();
+  }
+  playNotes(lastAccNotes, getBpm(), 0.10);
+}
+
+function previewAll() {
+  previewMelody();
+  previewAcc();
 }
 
 function pitchLabel(midi) {
@@ -307,6 +452,9 @@ els.generate.addEventListener("click", () => {
 });
 
 els.download.addEventListener("click", downloadOutput);
+els.previewMelody.addEventListener("click", previewMelody);
+els.previewAcc.addEventListener("click", previewAcc);
+els.previewAll.addEventListener("click", previewAll);
 els.downloadMelody.addEventListener("click", downloadMelody);
 els.composeGenerate.addEventListener("click", () => {
   setStatus("Generating accompaniment from roll...");
@@ -319,5 +467,6 @@ els.clearRoll.addEventListener("click", () => {
 });
 els.bars.addEventListener("change", buildRoll);
 els.grid.addEventListener("change", buildRoll);
+els.tempo.addEventListener("change", buildRoll);
 
 buildRoll();

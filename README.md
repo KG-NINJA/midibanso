@@ -1,6 +1,6 @@
 # midibanso web
 
-Static web app that lets you compose a monophonic melody in a piano roll and add a simple chordal accompaniment, or import a MIDI file.
+Static web app that lets you compose a monophonic melody in a piano roll and add accompaniment (block/bass/arpeggio), or import a MIDI file.
 
 ## GitHub Pages
 

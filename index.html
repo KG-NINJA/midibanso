@@ -47,6 +47,10 @@
                 <option value="16">1/16</option>
               </select>
             </label>
+            <label>
+              Tempo (BPM)
+              <input id="tempo" type="number" min="40" max="220" value="120" />
+            </label>
             <button id="clearRoll" class="ghost">Clear roll</button>
             <button id="composeGenerate" class="primary">Generate from roll</button>
             <button id="downloadMelody" class="ghost" disabled>Download melody</button>
@@ -76,6 +80,39 @@
               Harmony speed (beats)
               <input id="hold" type="number" min="0.25" max="4" step="0.25" value="1" />
             </label>
+            <label>
+              Accompaniment style
+              <select id="style">
+                <option value="block" selected>Block chords</option>
+                <option value="bass">Bass</option>
+                <option value="arp">Arpeggio</option>
+              </select>
+            </label>
+            <label>
+              Preview sound
+              <select id="wave">
+                <option value="sine" selected>Sine</option>
+                <option value="triangle">Triangle</option>
+                <option value="sawtooth">Saw</option>
+                <option value="square">Square</option>
+              </select>
+            </label>
+            <label>
+              Bass rhythm
+              <select id="bassRhythm">
+                <option value="quarter" selected>Quarter</option>
+                <option value="eighth">Eighth</option>
+                <option value="sync">Syncopated</option>
+              </select>
+            </label>
+            <label>
+              Arp direction
+              <select id="arpDir">
+                <option value="up" selected>Up</option>
+                <option value="down">Down</option>
+                <option value="updown">Up/Down</option>
+              </select>
+            </label>
           </div>
         </div>
         <div class="panel">
@@ -83,6 +120,9 @@
           <div class="panel-body">
             <div class="output-row">
               <button id="download" class="ghost" disabled>Download MIDI</button>
+              <button id="previewMelody" class="ghost">Preview melody</button>
+              <button id="previewAcc" class="ghost">Preview accompaniment</button>
+              <button id="previewAll" class="ghost">Preview full</button>
               <div class="small" id="summary">No output yet.</div>
             </div>
             <div class="legend">
