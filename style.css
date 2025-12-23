@@ -156,6 +156,24 @@ p {
   box-shadow: inset 1px 0 rgba(255, 255, 255, 0.08);
 }
 
+.roll-row.white .roll-label-cell {
+  background: rgba(24, 32, 44, 0.9);
+  color: #d9e2f2;
+}
+
+.roll-row.black .roll-label-cell {
+  background: rgba(12, 16, 24, 0.95);
+  color: #aab7ce;
+}
+
+.roll-row.white .roll-cell {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.roll-row.black .roll-cell {
+  background: rgba(255, 255, 255, 0.015);
+}
+
 .roll-cell.on {
   background: linear-gradient(120deg, #7fd7ff 0%, #7e9bff 100%);
 }

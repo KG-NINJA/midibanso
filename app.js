@@ -376,6 +376,10 @@ function pitchLabel(midi) {
   return `${names[pc]}${oct}`;
 }
 
+function isBlackKey(midi) {
+  return [1, 3, 6, 8, 10].includes(midi % 12);
+}
+
 function buildRoll() {
   if (!els.roll || !els.rollHeader) return;
   const bars = Math.min(8, Math.max(1, parseInt(els.bars.value, 10) || 1));
@@ -404,6 +408,7 @@ function buildRoll() {
   rows.forEach((midi, rowIdx) => {
     const row = document.createElement("div");
     row.className = "roll-row";
+    row.classList.add(isBlackKey(midi) ? "black" : "white");
     row.style.gridTemplateColumns = `80px repeat(${steps}, minmax(24px, 1fr))`;
     const label = document.createElement("div");
     label.className = "roll-label-cell";
